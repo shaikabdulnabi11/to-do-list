@@ -1,67 +1,36 @@
-const taskInput = document.getElementById("taskInput");
-const addTaskBtn = document.getElementById("addTaskBtn");
-const taskList = document.getElementById("taskList");
+let countdownInterval;
 
-// Load tasks from localStorage
-document.addEventListener("DOMContentLoaded", loadTasks);
+document.getElementById("startBtn").addEventListener("click", function () {
+    const datetimeInput = document.getElementById("datetime").value;
 
-addTaskBtn.addEventListener("click", addTask);
-taskInput.addEventListener("keypress", function (e) {
-    if (e.key === "Enter") addTask();
+    if (!datetimeInput) {
+        alert("Please select a valid date and time!");
+        return;
+    }
+
+    const targetDate = new Date(datetimeInput).getTime();
+    document.getElementById("countdown").classList.remove("hidden");
+
+    clearInterval(countdownInterval);
+
+    countdownInterval = setInterval(function () {
+        const now = new Date().getTime();
+        const timeLeft = targetDate - now;
+
+        if (timeLeft <= 0) {
+            clearInterval(countdownInterval);
+            document.getElementById("countdown").innerHTML = "<h2>🎉 Time's Up!</h2>";
+            return;
+        }
+
+        const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+        document.getElementById("days").textContent = days;
+        document.getElementById("hours").textContent = hours;
+        document.getElementById("minutes").textContent = minutes;
+        document.getElementById("seconds").textContent = seconds;
+    }, 1000);
 });
-
-function addTask() {
-    const taskText = taskInput.value.trim();
-    if (taskText === "") return;
-
-    createTaskElement(taskText);
-    saveTaskToLocalStorage(taskText);
-
-    taskInput.value = "";
-}
-
-function createTaskElement(taskText, completed = false) {
-    const li = document.createElement("li");
-    li.textContent = taskText;
-
-    if (completed) li.classList.add("completed");
-
-    li.addEventListener("click", () => {
-        li.classList.toggle("completed");
-        updateLocalStorage();
-    });
-
-    const deleteBtn = document.createElement("button");
-    deleteBtn.textContent = "❌";
-    deleteBtn.classList.add("delete-btn");
-    deleteBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        li.remove();
-        updateLocalStorage();
-    });
-
-    li.appendChild(deleteBtn);
-    taskList.appendChild(li);
-}
-
-function saveTaskToLocalStorage(task) {
-    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-    tasks.push({ text: task, completed: false });
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-}
-
-function updateLocalStorage() {
-    let tasks = [];
-    taskList.querySelectorAll("li").forEach((li) => {
-        tasks.push({
-            text: li.firstChild.textContent,
-            completed: li.classList.contains("completed"),
-        });
-    });
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-}
-
-function loadTasks() {
-    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-    tasks.forEach((task) => createTaskElement(task.text, task.completed));
-}
